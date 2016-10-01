@@ -36,7 +36,7 @@ setup(
     platforms=['Any'],
     scripts=[],
     provides=[],
-    install_requires=[],
+    install_requires=['automata'],
     dependency_links=[
         "-e git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1"
     ],
