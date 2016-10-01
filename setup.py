@@ -38,7 +38,7 @@ setup(
     provides=[],
     install_requires=[],
     dependency_links=[
-        "-e git+https://github.com/GeorgeArgyros/automata/tarball/master#egg=automata-0.0.1"
+        "-e git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1"
     ],
     namespace_packages=[],
     packages=find_packages(),
