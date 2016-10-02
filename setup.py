@@ -40,7 +40,7 @@ setup(
     provides=[],
     install_requires=['automata'],
     dependency_links=[
-        "-e git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1"
+        "git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1"
     ],
     namespace_packages=[],
     packages=find_packages(),
