@@ -1,9 +1,9 @@
 """This module initializes the observation table using an input atomaton"""
 from collections import defaultdict
 from operator import attrgetter
-from dfa import TropicalWeight
-from alphabet import createalphabet
-from dfa import DFA
+from automata.dfa import TropicalWeight
+from automata.alphabet import createalphabet
+from automata.dfa import DFA
 
 
 class ObservationTableInit:

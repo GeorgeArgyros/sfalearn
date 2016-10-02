@@ -4,7 +4,7 @@
 import logging
 from observationtableinit import ObservationTableInit
 
-from dfa import DFA
+from automata.dfa import DFA
 
 
 class _ObservationTable:

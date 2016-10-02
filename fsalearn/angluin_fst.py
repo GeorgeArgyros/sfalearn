@@ -6,7 +6,7 @@ import logging
 from itertools import product
 from os.path import commonprefix
 
-from mealy import MealyMachine
+from automata.mealy import MealyMachine
 
 
 class _ObservationTable:
