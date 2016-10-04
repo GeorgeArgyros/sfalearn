@@ -134,7 +134,6 @@ class SFALearner(object):
         Returns:
             None
         """
-        loglevel = logging.DEBUG
         # Initialize the logging for the algorithm.
         logging.basicConfig(filename=logfile,
                             format='%(asctime)s:%(levelname)s: %(message)s',
