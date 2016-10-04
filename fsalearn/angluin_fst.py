@@ -100,7 +100,6 @@ class MealyMachineLearner(object):
         Returns:
             None
         """
-        loglevel = logging.DEBUG
         # Initialize the logging for the algorithm.
         logging.basicConfig(filename=logfile,
                             format='%(asctime)input_string:%(levelname)input_string: '
