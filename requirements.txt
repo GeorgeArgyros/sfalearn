@@ -1,0 +1,1 @@
+-e git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1
