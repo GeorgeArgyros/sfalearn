@@ -1,18 +1,15 @@
 """This module performs the angluin algorithm"""
-
 #!/usr/bin/python
 
 import logging
-from itertools import product
-from os.path import commonprefix
+from observationtableinit import ObservationTableInit
 
-from automata.mealy import MealyMachine
+from symautomata.dfa import DFA
 
 
 class _ObservationTable:
     def __init__(self, alphabet):
         """
-        Initialization function
         Args:
             alphabet (list): input alphabet
         Returns:
@@ -21,7 +18,7 @@ class _ObservationTable:
         self.observation_table = {}
         self.sm_vector = []
         self.smi_vector = []
-        self.em_vector = list(alphabet)
+        self.em_vector = []
         self.alphabet = list(alphabet)
         self.equiv_classes = {}
 
@@ -31,9 +28,8 @@ class _ObservationTable:
         Args:
             None
         Returns:
-            tuple (bool, str): True if the observation table is
-            closed and false otherwise. If the table is not closed
-            the escaping string is returned.
+            tuple (bool, str): True if the observation table is closed and false otherwise.
+                                If the table is not closed the escaping string is returned.
         """
         for t in self.smi_vector:
             found = False
@@ -50,9 +46,9 @@ class _ObservationTable:
         """
         Return an entry from the observation table
         Args:
-            key (tuple (str,str)): A tuple specifying the row and column of the table
+            key tuple (str,str): A tuple specifying the row and column of the table
         Returns:
-            str: The observation table entry
+            str: The entry from the observation table
         """
         row, col = key
         try:
@@ -74,7 +70,7 @@ class _ObservationTable:
         self.observation_table[row][col] = value
 
 
-class MealyMachineLearner(object):
+class DFALearner(object):
     """
     Implements the algorithm for learning Mealy Machines (i.e. deterministic
     finite state transducers) as described in the paper
@@ -90,8 +86,9 @@ class MealyMachineLearner(object):
 
     Please refer into the method definitions for more details on the methods.
     """
+    epsilon = ''
 
-    def __init__(self, alphabet, _, loglevel=logging.DEBUG, logfile='angluin_fst.log'):
+    def __init__(self, alphabet, loglevel=logging.INFO, logfile='angluin_dfa.log'):
         """
         Args:
             alphabet (list): input alphabet.
@@ -102,8 +99,7 @@ class MealyMachineLearner(object):
         """
         # Initialize the logging for the algorithm.
         logging.basicConfig(filename=logfile,
-                            format='%(asctime)input_string:%(levelname)input_string: '
-                                   '%(message)input_string',
+                            format='%(asctime)s:%(levelname)s: %(message)s',
                             filemode='w',  # Overwrite any old log files
                             level=loglevel)
 
@@ -116,14 +112,10 @@ class MealyMachineLearner(object):
         Abstract method, it should implement the membership query. On input
         a string input_string the method must return the output of the target Mealy
         Machine on that string.
-
         Args:
             input_string (str): Input for the target Mealy machine
         Returns:
             str: the output of the target Mealy Machine on input input_string.
-
-        @rtype: String
-        @return: the output of the target Mealy Machine on input input_string.
         """
         raise NotImplementedError('Membership Query method is not implemented')
 
@@ -133,8 +125,7 @@ class MealyMachineLearner(object):
         where an equivalence query is unavailable a search strategy should
         be implemented to search for counterexamples. In absence of a
         counterexample one should assume that the machine is correct.
-
-         Args:
+        Args:
             conj_machine (MealyMachine): The Mealy Machine conjecture
         Returns:
             tuple (bool, string): A tuple (found, ce) where found is a boolean
@@ -143,8 +134,7 @@ class MealyMachineLearner(object):
             False, ce should be a string in which the target machine and the
             conjectured machine give different outputs.
         """
-        raise NotImplementedError(
-            'Equivalence Query method is not implemented')
+        raise NotImplementedError('Equivalence Query method is not implemented')
 
     def _fill_table_entry(self, row, col):
         """""
@@ -155,10 +145,7 @@ class MealyMachineLearner(object):
         Returns:
             None
         """
-        prefix = self._membership_query(row)
-        full_output = self._membership_query(row + col)
-        length = len(commonprefix([prefix, full_output]))
-        self.observation_table[row, col] = full_output[length:]
+        self.observation_table[row, col] = self._membership_query(row + col)
 
     ###### RivSch counterexample processing #####
 
@@ -175,6 +162,7 @@ class MealyMachineLearner(object):
             str: The access string
         """
         state = mma[0]
+        s_index = 0
         for i in range(index):
             for arc in state:
                 if mma.isyms.find(arc.ilabel) == w_string[i]:
@@ -183,105 +171,38 @@ class MealyMachineLearner(object):
 
         # The id of the state is its index inside the Sm list
         access_string = self.observation_table.sm_vector[s_index]
-        logging.debug(
-            'Access string for %d: %s - %d ',
-            index,
-            access_string,
-            s_index)
-
+        logging.debug('Access string for %d: %input_string - %d ', index, access_string, s_index)
         return access_string
 
-    def _check_suffix(self, w_string, access_string, index):
-        """
-        Checks if access string suffix matches with the examined string suffix
-        Args:
-            w_string (str): The examined string to be consumed
-            access_string (str): The access string for the state
-            index (int): The index value for selecting the prefix of w
-        Returns:
-            bool: A boolean valuei indicating if matching was successful
-        """
-        prefix_as = self._membership_query(access_string)
-        full_as = self._membership_query(access_string + w_string[index:])
-
-        prefix_w = self._membership_query(w_string[:index])
-        full_w = self._membership_query(w_string)
-
-        length = len(commonprefix([prefix_as, full_as]))
-        as_suffix = full_as[length:]
-
-        length = len(commonprefix([prefix_w, full_w]))
-        w_suffix = full_w[length:]
-
-        if as_suffix != w_suffix:
-            logging.debug('Access string state incorrect')
-            return True
-        logging.debug('Access string state correct.')
-        return False
-
-    def _find_bad_transition(self, mma, w_string):
-        """
-        Checks for bad DFA transitions using the examined string
+    def _process_counter_example(self, mma, w_string):
+        """"
+        Process a counterexample in the Rivest-Schapire way.
         Args:
             mma (DFA): The hypothesis automaton
             w_string (str): The examined string to be consumed
         Returns:
-            str: The prefix of the examined string that matches
+            None
         """
-        conj_out = mma.consume_input(w_string)
-        targ_out = self._membership_query(w_string)
-        # TODO: handle different length outputs from conjecture and target
-        # hypothesis.
-        length = min(len(conj_out), len(targ_out))
-        diff = [i for i in range(length)
-                if conj_out[i] != targ_out[i]]
-        if len(diff) == 0:
-            diff_index = len(targ_out)
-        else:
-            diff_index = diff[0]
-
-        low = 0
-        high = len(w_string)
-        while True:
-            i = (low + high) / 2
-            length = len(self._membership_query(w_string[:i]))
-            if length == diff_index + 1:
-                return w_string[:i]
-            elif length < diff_index + 1:
-                low = i + 1
-            else:
-                high = i - 1
-
-    def _process_counter_example(self, mma, w_string):
-        """"
-       Process a counterexample in the Rivest-Schapire way.
-       Args:
-           mma (DFA): The hypothesis automaton
-           w_string (str): The examined string to be consumed
-       Returns:
-           None
-        """
-        w_string = self._find_bad_transition(mma, w_string)
-
         diff = len(w_string)
         same = 0
+        membership_answer = self._membership_query(w_string)
         while True:
             i = (same + diff) / 2
             access_string = self._run_in_hypothesis(mma, w_string, i)
-            is_diff = self._check_suffix(w_string, access_string, i)
-            if is_diff:
+            if membership_answer != self._membership_query(access_string + w_string[i:]):
                 diff = i
             else:
                 same = i
             if diff - same == 1:
                 break
         exp = w_string[diff:]
-
         self.observation_table.em_vector.append(exp)
         for row in self.observation_table.sm_vector + self.observation_table.smi_vector:
             self._fill_table_entry(row, exp)
+        return 0
 
     #### End of counterexample processing  #####
+
 
     def _ot_make_closed(self, access_string):
         """
@@ -299,7 +220,7 @@ class MealyMachineLearner(object):
             for e in self.observation_table.em_vector:
                 self._fill_table_entry(access_string + i, e)
 
-    def get_mealy_conjecture(self):
+    def get_dfa_conjecture(self):
         """
         Utilize the observation table to construct a Mealy Machine.
         The library used for representing the Mealy Machine is the python
@@ -310,57 +231,82 @@ class MealyMachineLearner(object):
             MealyMachine: A mealy machine build based on a closed and consistent
         observation table.
         """
-        mma = MealyMachine()
+        dfa = DFA()
         for s in self.observation_table.sm_vector:
             for i in self.alphabet:
                 dst = self.observation_table.equiv_classes[s + i]
                 # If dst == None then the table is not closed.
-                if dst is None:
+                if dst == None:
                     logging.debug('Conjecture attempt on non closed table.')
                     return None
-                o = self.observation_table[s, i]
+                obsrv = self.observation_table[s, i]
                 src_id = self.observation_table.sm_vector.index(s)
                 dst_id = self.observation_table.sm_vector.index(dst)
-                mma.add_arc(src_id, dst_id, i, o)
+                dfa.add_arc(src_id, dst_id, i, obsrv)
 
-        # This works only for Mealy machines
-        for s in mma.states:
-            s.final = True
-        return mma
+        # Mark the final states in the hypothesis automaton.
+        i = 0
+        for s in self.observation_table.sm_vector:
+            dfa[i].final = self.observation_table[s, self.epsilon]
+            i += 1
+        return dfa
 
     def _init_table(self):
         """
         Initialize the observation table.
         """
-        self.observation_table.sm_vector.append('')
+        self.observation_table.sm_vector.append(self.epsilon)
         self.observation_table.smi_vector = list(self.alphabet)
-        self.observation_table.em_vector = list(self.alphabet)
+        self.observation_table.em_vector.append(self.epsilon)
 
-        for i in self.observation_table.em_vector:
-            self._fill_table_entry('', i)
+        self._fill_table_entry(self.epsilon, self.epsilon)
+        for s in self.observation_table.smi_vector:
+            self._fill_table_entry(s, self.epsilon)
 
-        for s, e in product(self.observation_table.smi_vector, self.observation_table.em_vector):
-            self._fill_table_entry(s, e)
+    def _init_table_from_dfa(self, mma):
+        """
+        Args:
+            mma (DFA): The input automaton
+        Returns:
+            None
+        """
+        observation_table_init = ObservationTableInit(self.epsilon, self.alphabet)
+        sm_vector, smi_vector, em_vector = observation_table_init.initialize(mma)
+        self.observation_table.sm_vector = sm_vector
+        self.observation_table.smi_vector = smi_vector
+        self.observation_table.em_vector = em_vector
 
-    def learn_mealy_machine(self):
+        logging.info('Initialized from DFA em_vector table is the following:')
+        logging.info(em_vector)
+
+        self._fill_table_entry(self.epsilon, self.epsilon)
+
+        for row in sorted(list(set(sm_vector + smi_vector)), key=len)[1:]:
+            # list(set([])) is used to remove duplicates, [1:0] to remove epsilon
+            for column in em_vector:
+                self._fill_table_entry(str(row), str(column))
+
+    def learn_dfa(self, mma=None):
         """
         Implements the high level loop of the algorithm for learning a
         Mealy machine.
         Args:
-            None
+            mma (DFA): The input automaton
         Returns:
-            MealyMachine: The learned mealy machine
+            MealyMachine: A string and a model for the Mealy machine to be learned.
         """
         logging.info('Initializing learning procedure.')
-        self._init_table()
+        if mma:
+            self._init_table_from_dfa(mma)
+        else:
+            self._init_table()
 
         logging.info('Generating a closed and consistent observation table.')
         while True:
 
             closed = False
-            # Make sure that the table is closed and consistent
+            # Make sure that the table is closed
             while not closed:
-
                 logging.debug('Checking if table is closed.')
                 closed, string = self.observation_table.is_closed()
                 if not closed:
@@ -370,14 +316,14 @@ class MealyMachineLearner(object):
                     logging.debug('Table closed.')
 
             # Create conjecture
-            mma = self.get_mealy_conjecture()
 
-            logging.info('Generated conjecture machine with %d states.',
-                         len(list(mma.states)))
+            dfa = self.get_dfa_conjecture()
+
+            logging.info('Generated conjecture machine with %d states.',len(list(dfa.states)))
 
             # _check correctness
             logging.debug('Running equivalence query.')
-            found, counter_example = self._equivalence_query(mma)
+            found, counter_example = self._equivalence_query(dfa)
 
             # Are we done?
             if found:
@@ -386,14 +332,13 @@ class MealyMachineLearner(object):
 
             # Add the new experiments into the table to reiterate the
             # learning loop
-            logging.info(
-                'Processing counterexample %input_string with length %d.',
-                counter_example,
-                len(counter_example))
-            self._process_counter_example(mma, counter_example)
+            logging.info('Processing counterexample %s with length %d.', counter_example, len(counter_example))
+            self._process_counter_example(dfa, counter_example)
 
         logging.info('Learning complete.')
-        return mma
+        logging.info('Learned em_vector table is the following:')
+        logging.info(self.observation_table.em_vector)
+        return '', dfa
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 import ez_setup
 ez_setup.use_setuptools()
 
-PROJECT = 'fsalearn'
+PROJECT = 'sfalearn'
 
 # Change docs/sphinx/conf.py too!
 VERSION = '0.0.1'
@@ -24,8 +24,8 @@ setup(
     author='George Argyros, Ioannis Stais',
     author_email='ioannis.stais@gmail.com',
 
-    url='https://github.com/GeorgeArgyros/fsalearn',
-    download_url='https://github.com/GeorgeArgyros/fsalearn/tarball/master',
+    url='https://github.com/GeorgeArgyros/sfalearn',
+    download_url='https://github.com/GeorgeArgyros/sfalearn/tarball/master',
 
     classifiers=['Development Status :: 3 - Alpha',
                  'Programming Language :: Python',
@@ -38,9 +38,9 @@ setup(
     platforms=['Any'],
     scripts=[],
     provides=[],
-    install_requires=['automata'],
+    install_requires=['symautomata'],
     dependency_links=[
-        "git+https://github.com/GeorgeArgyros/automata#egg=automata-0.0.1"
+        "git+https://github.com/GeorgeArgyros/automata#egg=symautomata-0.0.1"
     ],
     namespace_packages=[],
     packages=find_packages(),

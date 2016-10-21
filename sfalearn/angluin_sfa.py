@@ -6,7 +6,7 @@ import logging
 import random
 
 from observationtableinit import ObservationTableInit
-from automata.sfa import SFA, SetPredicate
+from symautomata.sfa import SFA, SetPredicate
 
 
 class _ObservationTable:
