@@ -40,7 +40,7 @@ setup(
     provides=[],
     install_requires=['symautomata'],
     dependency_links=[
-        "git+https://github.com/GeorgeArgyros/automata#egg=symautomata-0.0.1"
+        "git+https://github.com/GeorgeArgyros/symautomata#egg=symautomata-0.0.1"
     ],
     namespace_packages=[],
     packages=find_packages(),
