@@ -231,7 +231,7 @@ class DFALearner(object):
             MealyMachine: A mealy machine build based on a closed and consistent
         observation table.
         """
-        dfa = DFA()
+        dfa = DFA(self.alphabet)
         for s in self.observation_table.sm_vector:
             for i in self.alphabet:
                 dst = self.observation_table.equiv_classes[s + i]

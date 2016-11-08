@@ -205,7 +205,7 @@ class ObservationTableInit:
         Return:
             list, list, list: sm_vector, smi_vector, em_vector initialization vectors
         """
-        graph = DFA()
+        graph = DFA(self.alphabet)
         graph.init_from_acceptor(given_graph)
         graph.fixminimized(self.alphabet)
 

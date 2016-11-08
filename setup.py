@@ -5,7 +5,7 @@ ez_setup.use_setuptools()
 PROJECT = 'sfalearn'
 
 # Change docs/sphinx/conf.py too!
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 from setuptools import setup, find_packages
 
@@ -38,9 +38,9 @@ setup(
     platforms=['Any'],
     scripts=[],
     provides=[],
-    install_requires=['symautomata'],
+    install_requires=['symautomata>=0.0.3'],
     dependency_links=[
-        "git+https://github.com/GeorgeArgyros/symautomata#egg=symautomata-0.0.1"
+        "git+https://github.com/GeorgeArgyros/symautomata#egg=symautomata-0.0.3"
     ],
     namespace_packages=[],
     packages=find_packages(),
