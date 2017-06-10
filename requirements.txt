@@ -1,1 +1,1 @@
--e git+https://github.com/GeorgeArgyros/symautomata#egg=symautomata-0.0.6
+-e git+https://github.com/GeorgeArgyros/symautomata#egg=symautomata-0.0.7
